@@ -10,7 +10,8 @@
 
     <EditText
         android:id="@+id/search_query"
-        android:contentDescription="Type the song you want to download"
+        android:singleLine="true"
+        android:hint="Type the song you want to download"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
