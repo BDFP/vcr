@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">VCR</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_play">PlayActivity</string>
+    <string name="banner_ad_unit_id">ca-app-pub-6145835042223031/2820592907</string>
 </resources>

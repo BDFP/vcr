@@ -1,4 +1,4 @@
-package io.github.shakdwipeea.vcr;
+package io.github.shakdwipeea.vcr.data;
 
 /**
  * Created by akash on 7/3/16.

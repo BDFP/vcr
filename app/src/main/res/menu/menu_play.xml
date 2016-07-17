@@ -1,11 +1,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".search.HomeActivity">
+    tools:context="io.github.shakdwipeea.vcr.play.PlayActivity">
     <item
-        android:id="@+id/action_rate"
+        android:id="@+id/action_settings"
         android:orderInCategory="100"
-        android:title="Rate us"
-        android:icon="@drawable/ic_shop_black_24dp"
-        app:showAsAction="always" />
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
 </menu>

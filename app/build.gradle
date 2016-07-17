@@ -10,8 +10,8 @@ android {
         applicationId "io.github.shakdwipeea.vcr"
         minSdkVersion 15
         targetSdkVersion 24
-        versionCode 3
-        versionName "1.2"
+        versionCode 4
+        versionName "1.3"
     }
     buildTypes {
         release {
@@ -35,4 +35,5 @@ dependencies {
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
 
     compile 'com.jakewharton:butterknife:8.1.0'
+    compile 'com.google.android.gms:play-services-ads:9.2.1'
 }

@@ -1,4 +1,4 @@
-package io.github.shakdwipeea.vcr;
+package io.github.shakdwipeea.vcr.search;
 
 import android.Manifest;
 import android.app.DownloadManager;
@@ -15,9 +15,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,10 +25,22 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.github.shakdwipeea.vcr.R;
+import io.github.shakdwipeea.vcr.data.ServiceFactory;
+import io.github.shakdwipeea.vcr.data.Song;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -43,6 +55,10 @@ public class HomeActivity extends AppCompatActivity implements View.OnKeyListene
     @BindView(R.id.song_name) TextView songName;
     @BindView(R.id.download_button) Button downloadBtn;
 
+    InterstitialAd mInterstitialAd;
+
+    @BindView(R.id.adView) AdView adView;
+
     Song song;
 
     public static final String MUSIC_DIR = "/vcr_music";
@@ -56,9 +72,38 @@ public class HomeActivity extends AppCompatActivity implements View.OnKeyListene
 
         ButterKnife.bind(this);
 
+        requestNewBanner();
+
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId("ca-app-pub-6145835042223031/9285928909");
+
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                requestNewInterstitial();
+            }
+        });
+
+        requestNewInterstitial();
+
         searchQuery.setOnKeyListener(this);
     }
 
+    private void requestNewInterstitial() {
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("B6B257EC8BE4173AE786D0B71F1E0C52")
+                .build();
+
+        mInterstitialAd.loadAd(adRequest);
+    }
+
+    private void requestNewBanner() {
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("B6B257EC8BE4173AE786D0B71F1E0C52")
+                .build();
+
+        adView.loadAd(adRequest);
+    }
 
 
     @Override
@@ -171,13 +216,26 @@ public class HomeActivity extends AppCompatActivity implements View.OnKeyListene
             case R.id.download_button:
                 downloadBtn.setEnabled(false);
                 downloadSong();
+                showAd();
                 break;
             default:break;
         }
     }
 
+    private void showAd() {
+        if (mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+        }
+    }
+
     private String getSongName() {
-        return song.getUrl().split("/")[2];
+        if (song != null) {
+            String[] strings = song.getUrl().split("/");
+            return strings[strings.length - 1];
+        }
+        Toast.makeText(this, "Song not found", Toast.LENGTH_SHORT)
+                .show();
+        return null;
     }
 
     private void downloadSong() {
@@ -194,22 +252,28 @@ public class HomeActivity extends AppCompatActivity implements View.OnKeyListene
         }
 
         DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-        Uri source = Uri.parse(ServiceFactory.BASE_URL)
-                .buildUpon()
-                .appendPath(song.getUrl())
-                .build();
+        try {
+            URL url = new URL(song.getUrl());
+            URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(),
+                    url.getPath(), url.getQuery(), url.getRef());
+            url = uri.toURL();
 
-        DownloadManager.Request request = new DownloadManager.Request(source);
-        request.setTitle(getSongName());
-        request.setDescription("Downloading song from VCR");
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-        request.allowScanningByMediaScanner();
-        request.setDestinationInExternalPublicDir(MUSIC_DIR, getSongName());
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url.toString()));
+            request.setTitle(getSongName());
+            request.setDescription("Downloading song from VCR");
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.allowScanningByMediaScanner();
+            request.setDestinationInExternalPublicDir(MUSIC_DIR, getSongName());
 
-        dm.enqueue(request);
+            dm.enqueue(request);
 
-        Toast.makeText(this, "Download will start shortly", Toast.LENGTH_SHORT)
-                .show();
+            Toast.makeText(this, "Download will start shortly", Toast.LENGTH_SHORT)
+                    .show();
+        } catch (MalformedURLException | URISyntaxException e) {
+            Toast.makeText(this, "Bad Url", Toast.LENGTH_SHORT).show();
+        }
+
+
     }
 
     @Override
