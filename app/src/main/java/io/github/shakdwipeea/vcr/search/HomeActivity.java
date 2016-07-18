@@ -13,7 +13,10 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,17 +38,22 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.github.shakdwipeea.vcr.R;
+import io.github.shakdwipeea.vcr.data.Playlist;
 import io.github.shakdwipeea.vcr.data.ServiceFactory;
 import io.github.shakdwipeea.vcr.data.Song;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class HomeActivity extends AppCompatActivity implements View.OnKeyListener, Callback<Song>, View.OnClickListener {
+public class HomeActivity extends AppCompatActivity implements View.OnKeyListener, Callback<Song>,
+        View.OnClickListener, PlaylistAdapter.ViewHolder.Callback {
+    private static final String TAG = "HomeActivity";
+
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 100;
 
     @BindView(R.id.search_query) EditText searchQuery;
@@ -55,11 +63,16 @@ public class HomeActivity extends AppCompatActivity implements View.OnKeyListene
     @BindView(R.id.song_name) TextView songName;
     @BindView(R.id.download_button) Button downloadBtn;
 
+    @BindView(R.id.playlist_view) RecyclerView playListView;
+
     InterstitialAd mInterstitialAd;
 
     @BindView(R.id.adView) AdView adView;
 
     Song song;
+
+    private PlaylistAdapter playlistAdapter;
+    private LinearLayoutManager mLayoutManager;
 
     public static final String MUSIC_DIR = "/vcr_music";
 
@@ -72,6 +85,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnKeyListene
 
         ButterKnife.bind(this);
 
+        setUpRecyclerView();
         requestNewBanner();
 
         mInterstitialAd = new InterstitialAd(this);
@@ -87,6 +101,22 @@ public class HomeActivity extends AppCompatActivity implements View.OnKeyListene
         requestNewInterstitial();
 
         searchQuery.setOnKeyListener(this);
+
+        getPlaylists();
+    }
+
+    private void setUpRecyclerView() {
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        playListView.setHasFixedSize(false);
+
+        // use a linear layout manager
+        mLayoutManager = new LinearLayoutManager(this);
+        playListView.setLayoutManager(mLayoutManager);
+
+        // specify an adapter (see also next example)
+        playlistAdapter = new PlaylistAdapter(this);
+        playListView.setAdapter(playlistAdapter);
     }
 
     private void requestNewInterstitial() {
@@ -156,6 +186,29 @@ public class HomeActivity extends AppCompatActivity implements View.OnKeyListene
             }
         }
         return false;
+    }
+
+    private void getPlaylists() {
+        ServiceFactory.getGoService().getPlayList()
+                .enqueue(new Callback<List<Playlist>>() {
+                    @Override
+                    public void onResponse(Call<List<Playlist>> call, Response<List<Playlist>> response) {
+                        if (response.isSuccessful()) {
+                            Log.e(TAG, "Got response duvverss");
+                            playlistAdapter.setPlaylists(response.body());
+                            playlistAdapter.notifyDataSetChanged();
+                        } else {
+                            Log.e(TAG, "Got errror " + response.errorBody());
+                            showError("HTTP error");
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<List<Playlist>> call, Throwable t) {
+                        Log.e(TAG, "Got response " + t.getMessage());
+                        onFailure(call, t);
+                    }
+                });
     }
 
     /**
@@ -331,5 +384,14 @@ public class HomeActivity extends AppCompatActivity implements View.OnKeyListene
         } else {
             return true;
         }
+    }
+
+    @Override
+    public void onSearch(String url) {
+
+    }
+
+    private void showError(String text) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
 }

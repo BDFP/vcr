@@ -8,20 +8,34 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class ServiceFactory {
     private  static ApiService apiService;
+    private static GoApiService goApiService;
 
-    public static String BASE_URL = "http://torpedo.servegame.com:3000";
+    public static String BASE_URL = "http://torpedo.servegame.com";
 
     public static ApiService getInstance() {
+
         if (apiService == null) {
-            Retrofit build = new Retrofit.Builder()
-                    .baseUrl(BASE_URL)
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(BASE_URL + ":3000")
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 
-            apiService = build.create(ApiService.class);
-
+            apiService = retrofit.create(ApiService.class);
         }
 
         return apiService;
+    }
+
+    public static GoApiService getGoService() {
+        if (goApiService == null) {
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(BASE_URL + ":8000")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            goApiService = retrofit.create(GoApiService.class);
+        }
+
+        return goApiService;
     }
 }
